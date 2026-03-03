@@ -1,0 +1,184 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "device_added": "The dispatch device was added successfully.",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+    },
+    "error": {
+      "entity_not_found": "One or more of the selected entities could not be found in Home Assistant.",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "step": {
+      "add_device": {
+        "data": {
+          "estimated_power": "Estimated power consumption (W)",
+          "min_battery_state": "Minimum battery state (%)",
+          "name": "Device name",
+          "power_entity": "Power measurement sensor (optional)",
+          "priority": "Priority",
+          "switch_entity": "Switch entity to control"
+        },
+        "data_description": {
+          "estimated_power": "Expected power draw in watts. Used to deduct from the remaining surplus when this device is switched on.",
+          "min_battery_state": "The battery must be at or above this percentage for the algorithm to turn this device on.",
+          "name": "A friendly label displayed on the virtual dispatch switch in your dashboard.",
+          "power_entity": "When set, the actual measured power is used instead of the estimated value when recalculating the surplus after turning this device off.",
+          "priority": "How urgently this device should receive surplus power. `Highest` devices are served first; `Lowest` devices only receive surplus when all higher-priority devices are already satisfied.",
+          "switch_entity": "The real switch or plug entity that will be turned on or off by the algorithm."
+        },
+        "title": "Add dispatch device"
+      },
+      "reconfigure": {
+        "data": {
+          "allowance_entity": "Allowance entity (optional)",
+          "battery_charge_entity": "Battery charging power sensor (optional)",
+          "battery_charge_invert": "Invert battery charge sign",
+          "battery_state_entity": "Battery state of charge sensor (optional)",
+          "grid_entity": "Grid power sensor",
+          "grid_invert": "Invert grid sign (positive = importing)",
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "allowance_entity": "An `input_number` or `number` entity whose value in watts is added to the computed surplus. Change it from your dashboard to tune dispatch sensitivity without reconfiguring.",
+          "battery_charge_entity": "Sensor measuring the battery charging power in watts. Its value is added to the grid value to compute the total available surplus.",
+          "battery_charge_invert": "Enable this if your battery charge sensor reports positive values when discharging instead of charging.",
+          "battery_state_entity": "Sensor measuring the battery state of charge in percent. Used to enforce the minimum battery level threshold configured per device.",
+          "grid_entity": "Sensor measuring the power exchanged with the grid in watts. Check the 'invert' option if positive means exporting surplus.",
+          "grid_invert": "Enable this if your grid sensor reports positive values when importing from the grid (most common). Disabling assumes positive means exporting.",
+          "scan_interval": "How often the dispatch algorithm runs, in seconds. Minimum: 10 s."
+        },
+        "description": "Update the sensor entities used by the dispatch algorithm.",
+        "title": "Reconfigure energy inputs"
+      },
+      "user": {
+        "data": {
+          "allowance_entity": "Allowance entity (optional)",
+          "battery_charge_entity": "Battery charging power sensor (optional)",
+          "battery_charge_invert": "Invert battery charge sign",
+          "battery_state_entity": "Battery state of charge sensor (optional)",
+          "grid_entity": "Grid power sensor",
+          "grid_invert": "Invert grid sign (positive = importing)",
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "allowance_entity": "An `input_number` or `number` entity whose value in watts is added to the computed surplus. Change it from your dashboard to tune dispatch sensitivity without reconfiguring.",
+          "battery_charge_entity": "Sensor measuring the battery charging power in watts. Its value is added to the grid value to compute the total available surplus.",
+          "battery_charge_invert": "Enable this if your battery charge sensor reports positive values when discharging instead of charging.",
+          "battery_state_entity": "Sensor measuring the battery state of charge in percent. Used to enforce the minimum battery level threshold configured per device.",
+          "grid_entity": "Sensor measuring the power exchanged with the grid in watts. Check the 'invert' option if positive means exporting surplus.",
+          "grid_invert": "Enable this if your grid sensor reports positive values when importing from the grid (most common). Disabling assumes positive means exporting.",
+          "scan_interval": "How often the dispatch algorithm runs, in seconds. Minimum: 10 s."
+        },
+        "description": "Select the sensor entities that provide the energy readings for the dispatch algorithm.",
+        "title": "Configure energy inputs"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "surplus": {
+        "name": "Available surplus"
+      }
+    },
+    "switch": {
+      "managed": {
+        "name": "Managed",
+        "state": {
+          "off": "Unmanaged",
+          "on": "Managed"
+        }
+      },
+      "override": {
+        "name": "Override",
+        "state": {
+          "off": "Normal",
+          "on": "Forced on"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "add_device": {
+        "data": {
+          "estimated_power": "Estimated power consumption (W)",
+          "min_battery_state": "Minimum battery state (%)",
+          "name": "Device name",
+          "power_entity": "Power measurement sensor (optional)",
+          "priority": "Priority",
+          "switch_entity": "Switch entity to control"
+        },
+        "data_description": {
+          "estimated_power": "Expected power draw in watts. Used to deduct from the remaining surplus when this device is switched on.",
+          "min_battery_state": "The battery must be at or above this percentage for the algorithm to turn this device on.",
+          "name": "A friendly label displayed on the virtual dispatch switch in your dashboard.",
+          "power_entity": "When set, the actual measured power is used instead of the estimated value when recalculating the surplus after turning this device off.",
+          "priority": "How urgently this device should receive surplus power. `Highest` devices are served first; `Lowest` devices only receive surplus when all higher-priority devices are already satisfied.",
+          "switch_entity": "The real switch or plug entity that will be turned on or off by the algorithm."
+        },
+        "title": "Add dispatch device"
+      },
+      "edit_device": {
+        "data": {
+          "estimated_power": "Estimated power consumption (W)",
+          "min_battery_state": "Minimum battery state (%)",
+          "name": "Device name",
+          "power_entity": "Power measurement sensor (optional)",
+          "priority": "Priority",
+          "switch_entity": "Switch entity to control"
+        },
+        "data_description": {
+          "estimated_power": "Expected power draw in watts. Used to deduct from the remaining surplus when this device is switched on.",
+          "min_battery_state": "The battery must be at or above this percentage for the algorithm to turn this device on.",
+          "name": "A friendly label displayed on the virtual dispatch switch in your dashboard.",
+          "power_entity": "When set, the actual measured power is used instead of the estimated value when recalculating the surplus after turning this device off.",
+          "priority": "How urgently this device should receive surplus power. `Highest` devices are served first; `Lowest` devices only receive surplus when all higher-priority devices are already satisfied.",
+          "switch_entity": "The real switch or plug entity that will be turned on or off by the algorithm."
+        },
+        "title": "Edit dispatch device"
+      },
+      "init": {
+        "data": {
+          "allowance_entity": "Allowance entity (optional)",
+          "battery_charge_entity": "Battery charging power sensor (optional)",
+          "battery_charge_invert": "Invert battery charge sign",
+          "battery_state_entity": "Battery state of charge sensor (optional)",
+          "grid_entity": "Grid power sensor",
+          "grid_invert": "Invert grid sign (positive = importing)",
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "allowance_entity": "An `input_number` or `number` entity whose value in watts is added to the computed surplus. Change it from your dashboard to tune dispatch sensitivity without reconfiguring.",
+          "battery_charge_entity": "Sensor measuring the battery charging power in watts. Its value is added to the grid value to compute the total available surplus.",
+          "battery_charge_invert": "Enable this if your battery charge sensor reports positive values when discharging instead of charging.",
+          "battery_state_entity": "Sensor measuring the battery state of charge in percent. Used to enforce the minimum battery level threshold configured per device.",
+          "grid_entity": "Sensor measuring the power exchanged with the grid in watts. Check the 'invert' option if positive means exporting surplus.",
+          "grid_invert": "Enable this if your grid sensor reports positive values when importing from the grid (most common). Disabling assumes positive means exporting.",
+          "scan_interval": "How often the dispatch algorithm runs, in seconds. Minimum: 10 s."
+        },
+        "description": "Update the sensor entities used by the dispatch algorithm.",
+        "title": "Configure energy inputs"
+      },
+      "select_edit": {
+        "data": {
+          "id": "Device"
+        },
+        "data_description": {
+          "id": "Select the dispatch device you want to edit."
+        },
+        "title": "Select device to edit"
+      },
+      "select_remove": {
+        "data": {
+          "id": "Device"
+        },
+        "data_description": {
+          "id": "Select the dispatch device you want to remove."
+        },
+        "description": "Removing a device stops algorithm control for it. The underlying switch will not be turned off automatically.",
+        "title": "Select device to remove"
+      }
+    }
+  }
+}
