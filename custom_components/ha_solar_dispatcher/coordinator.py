@@ -96,6 +96,12 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
             device[CONF_DEVICE_ID]: float(device[CONF_DEVICE_ESTIMATED_POWER])
             for device in entry.options.get(CONF_DEVICES, [])
         }
+        # Tracks the entity-id of real switches being turned off by the
+        # coordinator itself. The DispatcherOverrideSwitch listener consults
+        # this set to distinguish coordinator-initiated off events (which
+        # should not cancel an active override) from external ones (which
+        # should cancel the override).
+        self.turning_off_by_coordinator: set[str] = set()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -153,6 +159,10 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
 
     async def _turn_off(self, entity_id: str) -> None:
         """Call the switch.turn_off service for a real switch entity."""
+        # Mark this as a coordinator-initiated turn-off so that
+        # DispatcherOverrideSwitch listeners can ignore the resulting state
+        # change without cancelling an active override.
+        self.turning_off_by_coordinator.add(entity_id)
         await self.hass.services.async_call(
             SWITCH_DOMAIN,
             SERVICE_TURN_OFF,
@@ -170,6 +180,14 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
         then iterates through configured devices sorted by priority and
         decides whether to turn each real switch ON or OFF.
         """
+        # Clear any stale coordinator turn-off markers from the previous cycle.
+        # Normally the DispatcherOverrideSwitch listener consumes each marker
+        # when the ON→OFF state-change event fires.  If the real switch was
+        # already off when _turn_off was called (no event fires), the entry
+        # would otherwise remain in the set indefinitely, causing a subsequent
+        # external OFF event to be misidentified as coordinator-caused.
+        self.turning_off_by_coordinator.clear()
+
         data = self.entry.data
         options = self.entry.options
 

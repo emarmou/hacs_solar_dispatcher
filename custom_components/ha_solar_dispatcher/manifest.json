@@ -1,15 +1,12 @@
 {
   "domain": "ha_solar_dispatcher",
   "name": "Solar Dispatcher",
-  "codeowners": [
-    "@emarmou"
-  ],
+  "codeowners": ["@emarmou"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://www.home-assistant.io/integrations/ha_solar_dispatcher",
   "integration_type": "device",
   "iot_class": "calculated",
   "quality_scale": "bronze",
-  "requirements": [],
-  "version": "0.1.0"
+  "requirements": []
 }

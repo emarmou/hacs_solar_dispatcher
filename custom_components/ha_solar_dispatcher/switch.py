@@ -12,9 +12,10 @@ import logging
 from typing import Any
 
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN, SwitchEntity
-from homeassistant.const import SERVICE_TURN_ON, STATE_ON
-from homeassistant.core import HomeAssistant
+from homeassistant.const import SERVICE_TURN_ON, STATE_OFF, STATE_ON
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import SolarDispatcherConfigEntry
@@ -175,6 +176,60 @@ class DispatcherOverrideSwitch(SolarDispatcherEntity, SwitchEntity, RestoreEntit
                 self._attr_name,
                 is_override,
             )
+
+        real_switch = self._device_config[CONF_DEVICE_SWITCH_ENTITY]
+
+        @callback
+        def _async_real_switch_state_changed(
+            event: Event[EventStateChangedData],
+        ) -> None:
+            """Auto-disable override when real switch is turned off externally.
+
+            The override is intended to counteract the coordinator's own off
+            decisions.  When something other than the coordinator turns the
+            real switch off, the override is cancelled so the real switch
+            will not be forced back on by the next dispatch cycle.
+            """
+            old_state = event.data["old_state"]
+            new_state = event.data["new_state"]
+
+            # Only react to ON → OFF transitions.
+            if (
+                old_state is None
+                or old_state.state != STATE_ON
+                or new_state is None
+                or new_state.state != STATE_OFF
+            ):
+                return
+
+            if real_switch in self.coordinator.turning_off_by_coordinator:
+                # The coordinator caused this transition; consume the marker
+                # and leave the override in place.
+                self.coordinator.turning_off_by_coordinator.discard(real_switch)
+                _LOGGER.debug(
+                    "Real switch '%s' turned off by coordinator; "
+                    "keeping override for '%s'",
+                    real_switch,
+                    self._attr_name,
+                )
+                return
+
+            # An external component turned the real switch off — cancel the
+            # override so the coordinator will not immediately force it back on.
+            _LOGGER.debug(
+                "Real switch '%s' turned off externally; "
+                "auto-disabling override for '%s'",
+                real_switch,
+                self._attr_name,
+            )
+            self.coordinator.device_override[self._device_id] = False
+            self.async_write_ha_state()
+
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, real_switch, _async_real_switch_state_changed
+            )
+        )
 
     @property
     def is_on(self) -> bool:
