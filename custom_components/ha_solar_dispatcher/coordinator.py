@@ -149,6 +149,56 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
             return float(fallback)
         return value
 
+    def _find_preemption_candidates(
+        self,
+        devices: list[dict],
+        start_index: int,
+        devices_to_preempt: set[str],
+        surplus: float,
+        needed_power: float,
+    ) -> tuple[list[dict], float]:
+        """Find the minimal set of lower-priority ON devices to preempt.
+
+        Scans devices[start_index:] for managed, ON, non-overridden devices
+        not already scheduled for preemption, then selects the lowest-priority
+        ones first until the accumulated surplus meets needed_power.
+
+        Returns (devices_to_turn_off, total_available_budget).
+        """
+        candidates: list[tuple[int, dict]] = []
+        for j in range(start_index, len(devices)):
+            lower = devices[j]
+            lower_id = lower[CONF_DEVICE_ID]
+            if lower_id in devices_to_preempt:
+                continue
+            if not self.device_enabled.get(lower_id, True):
+                continue
+            if self.device_override.get(lower_id, False):
+                continue
+            lower_switch = lower[CONF_DEVICE_SWITCH_ENTITY]
+            lower_state = self.hass.states.get(lower_switch)
+            if lower_state is None or lower_state.state != STATE_ON:
+                continue
+            candidates.append((j, lower))
+
+        # Sacrifice the lowest-priority (highest-index) devices first
+        # so only the minimal necessary subset is turned off.
+        candidates.sort(key=lambda x: x[0], reverse=True)
+
+        available = surplus
+        to_preempt: list[dict] = []
+        for _, lower in candidates:
+            lower_id = lower[CONF_DEVICE_ID]
+            lower_estimated = self.device_estimated_power.get(
+                lower_id, float(lower[CONF_DEVICE_ESTIMATED_POWER])
+            )
+            available += self._get_actual_power(lower, lower_estimated)
+            to_preempt.append(lower)
+            if available >= needed_power:
+                break
+
+        return to_preempt, available
+
     async def _turn_on(self, entity_id: str) -> None:
         """Call the switch.turn_on service for a real switch entity."""
         await self.hass.services.async_call(
@@ -248,7 +298,11 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
             ),
         )
 
-        for device in devices:
+        # Set of device IDs that have been selected for preemptive turn-off by
+        # a higher-priority device earlier in this dispatch cycle.
+        devices_to_preempt: set[str] = set()
+
+        for i, device in enumerate(devices):
             device_id: str = device[CONF_DEVICE_ID]
             device_name: str = device.get(CONF_DEVICE_NAME, device_id)
 
@@ -287,10 +341,24 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
                     surplus -= estimated_power
                 continue
 
+            # Handle preemption: a higher-priority device above selected this
+            # device for turn-off to free up power budget.
+            if device_id in devices_to_preempt:
+                actual_power = self._get_actual_power(device, estimated_power)
+                _LOGGER.info(
+                    "Preempting '%s' (%.0fW) to free surplus for higher-priority device",
+                    device_name,
+                    actual_power,
+                )
+                await self._turn_off(real_switch)
+                surplus += actual_power
+                continue
+
             if not is_on:
                 # Device is currently OFF.
                 # Turn it ON if there is enough surplus and battery condition is met.
-                if estimated_power <= surplus and batt_state_pct >= min_batt:
+                battery_ok = batt_state_pct >= min_batt
+                if estimated_power <= surplus and battery_ok:
                     _LOGGER.info(
                         "Turning ON '%s' (needs %dW, surplus %.0fW, batt %.0f%%)",
                         device_name,
@@ -302,6 +370,36 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
                     # Subtract estimated power from remaining surplus so that
                     # lower-priority devices see the reduced budget.
                     surplus -= estimated_power
+                elif battery_ok:
+                    # Direct surplus is insufficient; try preemption.
+                    # Scan lower-priority managed ON devices to see if freeing
+                    # them (lowest priority first) creates enough budget.
+                    to_preempt, available = self._find_preemption_candidates(
+                        devices, i + 1, devices_to_preempt, surplus, estimated_power
+                    )
+                    if available >= estimated_power:
+                        _LOGGER.info(
+                            "Turning ON '%s' via preemption"
+                            " (needs %dW, budget %.0fW, preempting %d device(s))",
+                            device_name,
+                            estimated_power,
+                            available,
+                            len(to_preempt),
+                        )
+                        for lower in to_preempt:
+                            devices_to_preempt.add(lower[CONF_DEVICE_ID])
+                        await self._turn_on(real_switch)
+                        surplus -= estimated_power
+                    else:
+                        _LOGGER.debug(
+                            "Keeping '%s' OFF"
+                            " (needs %dW, surplus %.0fW,"
+                            " no preemption possible, batt %.0f%%)",
+                            device_name,
+                            estimated_power,
+                            surplus,
+                            batt_state_pct,
+                        )
                 else:
                     _LOGGER.debug(
                         "Keeping '%s' OFF (needs %dW, surplus %.0fW, batt %.0f%%)",
