@@ -266,24 +266,27 @@ class SolarDispatcherCoordinator(DataUpdateCoordinator[SolarDispatcherData]):
             if value is not None:
                 batt_state_pct = value
 
-        # --- Allowance from an input_number/number entity (optional) ---
-        allowance = 0.0
+        # --- Allowance ratio from an input_number/number entity
+        #     (optional, range [0, 1]) ---
+        allowance_ratio = 0.0
         if allowance_entity := data.get(CONF_ALLOWANCE_ENTITY):
             value = self._read_float(allowance_entity)
             if value is not None:
-                allowance = value
+                allowance_ratio = value
 
         # --- Available surplus ---
-        # surplus = grid_power + battery_charge_power + allowance
-        # All three are signed: positive means power is available/exporting.
-        surplus = grid_value + batt_power + allowance
+        # surplus = (grid + battery) × (1 + allowance_ratio)
+        # An allowance_ratio of 0.0 means no extra budget; 0.1 grants
+        # 10 % of the base power as additional effective surplus.
+        base_power = grid_value + batt_power
+        surplus = base_power * (1 + allowance_ratio)
 
         _LOGGER.debug(
-            "Grid: %.0fW  Battery: %.0fW  Allowance: %.0fW"
+            "Grid: %.0fW  Battery: %.0fW  Allowance ratio: %.2f"
             "  → Surplus: %.0fW  Battery: %.0f%%",
             grid_value,
             batt_power,
-            allowance,
+            allowance_ratio,
             surplus,
             batt_state_pct,
         )
