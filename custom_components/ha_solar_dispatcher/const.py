@@ -32,7 +32,7 @@ DISPATCH_PRIORITY_ORDER: list[DispatchPriority] = [
 DOMAIN = "ha_solar_dispatcher"
 
 # Fixed polling interval for the dispatch algorithm
-DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
+DEFAULT_SCAN_INTERVAL = timedelta(seconds=300)  # 5 minutes
 
 # ── Initial config entry data keys ──────────────────────────────────────────
 CONF_SCAN_INTERVAL = "scan_interval"

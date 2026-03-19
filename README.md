@@ -75,7 +75,11 @@ You keep full control at all times:
 
 Go to **Settings → Devices & Services → Add integration** and search for **Solar Dispatcher**.
 
-> *(screenshot placeholder)*
+![alt](custom_components/ha_solar_dispatcher/images/add_integration.png)
+
+Then you can configure the energy inputs for the solar dispatcher:
+
+![alt](custom_components/ha_solar_dispatcher/images/configure_energy.png)
 
 You will see the **Configure energy inputs** form:
 
@@ -87,7 +91,11 @@ You will see the **Configure energy inputs** form:
 | **Invert battery charge sign** | — | Enable when your battery sensor reports positive when discharging instead of charging. |
 | **Battery state of charge sensor** | No | Percentage sensor. Enables per-device minimum battery thresholds. |
 | **Allowance entity** | No | An `input_number` or `number` entity whose value (0–1) adds a tolerance margin to the surplus. See [Allowance ratio](#allowance-ratio--handling-uncertainty). |
+<<<<<<< HEAD
 | **Polling interval** | Yes | How often the algorithm runs, in seconds (minimum 10 s, default 30 s). |
+=======
+| **Polling interval** | Yes | How often the algorithm runs, in seconds (minimum 10 seconds, default 5 minutes). |
+>>>>>>> f336aee (add logo and complete the readme)
 
 After submitting, the integration entry is created with no dispatch devices yet. Add devices in the next step.
 
@@ -95,19 +103,13 @@ After submitting, the integration entry is created with no dispatch devices yet.
 
 ### Adding dispatch devices
 
-Each load you want the algorithm to control is a **dispatch device**. There are two ways to add one:
+Each load you want the algorithm to control is a **dispatch device**. To add one:
 
-**Option A — from the integrations page**
-Click the **+** button on the Solar Dispatcher integration card.
+Click on the integration card, then use the **Add device** action.
 
-> *(screenshot placeholder)*
+![alt](custom_components/ha_solar_dispatcher/images/add_device.png)
 
-**Option B — from the options flow**
-Click **Configure** on the integration card, then use the **Add device** action.
-
-> *(screenshot placeholder)*
-
-Either way you will see the **Add dispatch device** form:
+You will see the **Add dispatch device** form:
 
 | Field | Required | Description |
 |---|---|---|
@@ -124,7 +126,7 @@ Either way you will see the **Add dispatch device** form:
 
 **Change energy inputs** — click **Configure** (⚙) on the Solar Dispatcher card. The first form that appears allows you to update all energy-input settings.
 
-> *(screenshot placeholder)*
+![alt](custom_components/ha_solar_dispatcher/images/reconfigure_energy.png)
 
 **Edit or remove a dispatch device** — from the same **Configure** form, the options flow offers **Edit device** and **Remove device** sub-steps that let you select the target device from a list.
 
