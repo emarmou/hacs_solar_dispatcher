@@ -1,14 +1,18 @@
 {
   "domain": "ha_solar_dispatcher",
   "name": "Solar Dispatcher",
+  "categories": [
+    "energy.solar_batteries"
+  ],
   "codeowners": [
     "@emarmou"
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://www.home-assistant.io/integrations/ha_solar_dispatcher",
-  "integration_type": "device",
+  "documentation": "https://github.com/emarmou/hacs_solar_dispatcher#readme",
+  "integration_type": "helper",
   "iot_class": "calculated",
+  "issue_tracker": "https://github.com/emarmou/hacs_solar_dispatcher/issues",
   "quality_scale": "bronze",
   "requirements": [],
   "version": "0.9.1"
